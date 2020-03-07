@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/bin/Debug/netcoreapp3.1/DozeField.dll",
+            "program": "${workspaceFolder}/bin/Debug/netcoreapp3.1/DozeFieldAlgorithm.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
