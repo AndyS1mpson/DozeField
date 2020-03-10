@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace DozeField
 {
@@ -64,6 +65,23 @@ namespace DozeField
             return intersection;
         }
     
+        //find intersection of 2 lines
+        public (double,double) IntersectionLines(Line line1,Line line2)
+        {
+            (double,double) intersection;
+            if(line1.a!=0)
+            {
+                intersection.Item2 = (line2.a  * line1.c - line2.c * line1.a)/(line1.a * line2.b - line2.a * line1.b);
+                intersection.Item1 = (-line1.b * intersection.Item2 - line1.c)/line1.a;
+            }
+            else
+            {
+                intersection.Item2 = -line1.c/line1.b;
+                intersection.Item1 = (line2.b * line1.c - line2.c * line1.b)/(line2.a * line1.b);
+            }
+            
+            return intersection;
+        }
         //cosine of angle between two vectors
         public double CosOfAngleBetweenVectors((double,double) vector1,(double,double) vector2)
         {
@@ -98,7 +116,8 @@ namespace DozeField
                 checkingLine = FindNormalCoefficients(checkingSide,point);
                 curInter = IntersectionOfPerpendicularLines(checkingSide,checkingLine);
                 guideCurLineVector = (curInter.Item1 - point.Item1,curInter.Item2 - point.Item2);
-
+                //normalSideVector=(checkingSide.a,checkingSide.b);
+                //Console.WriteLine(normalSideVector);
                 if(lengthGuideLineVector>Metric(curInter,point) || lengthGuideLineVector==0)
                     if(_field[i].Item1 <= _field[i+1].Item1)
                         {
@@ -106,7 +125,7 @@ namespace DozeField
                             if((_field[i].Item2 < _field[i+1].Item2 && curInter.Item2 >= _field[i].Item2 && curInter.Item2 <= _field[i+1].Item2)
                                          || (_field[i].Item2 > _field[i+1].Item2 && curInter.Item2 >= _field[i+1].Item2 && curInter.Item2 <= _field[i].Item2))
                             {
-                                normalSideVector = (-checkingSide.a,-checkingSide.b);
+                                normalSideVector = (checkingSide.a,checkingSide.b);
                                 guideLineVector = guideCurLineVector;
                                 intersection = curInter;
                                 lengthGuideLineVector = Metric(curInter,point);
@@ -117,7 +136,7 @@ namespace DozeField
                         if((_field[i].Item2 < _field[i+1].Item2 && curInter.Item2 >= _field[i].Item2 && curInter.Item2 <= _field[i+1].Item2)
                                          || (_field[i].Item2 > _field[i+1].Item2 && curInter.Item2 >= _field[i+1].Item2 && curInter.Item2 <= _field[i].Item2))
                         {
-                            normalSideVector = (checkingSide.a,checkingSide.b);
+                            normalSideVector = (-checkingSide.a,-checkingSide.b);
                             guideLineVector = guideCurLineVector;
                             intersection = curInter;
                             lengthGuideLineVector = Metric(curInter,point);
@@ -131,5 +150,73 @@ namespace DozeField
         return result;
         }
     
+        public List<((double,double),(double,double))> ClippingOfLine((double,double) point1,(double,double) point2)
+        {
+            List<((double,double),(double,double))> finalSetOfSegments=new List<((double, double), (double, double))>();
+            Line curLine = FindCoefficientsOfEquation(point1,point2);
+            List<double> lengthMas = new List<double>();
+            List<(double,double)> interPointsMas=new List<(double, double)>();
+            interPointsMas.Add(point1);
+            //find all intersections of the line with the sides of the field
+            for(int i=0;i<_field.Length-1;i++)
+            {
+                Line side=FindCoefficientsOfEquation(_field[i],_field[i+1]);
+                var curInter = IntersectionLines(side,curLine);
+                if(curInter.Item1 >= _field[i].Item1 && curInter.Item1 <= _field[i+1].Item1)
+                {
+                    if((_field[i].Item2 < _field[i+1].Item2 && curInter.Item2 >= _field[i].Item2 && curInter.Item2 <= _field[i+1].Item2)
+                            || (_field[i].Item2 > _field[i+1].Item2 && curInter.Item2 >= _field[i+1].Item2 && curInter.Item2 <= _field[i].Item2))
+                    {
+                        interPointsMas.Add(curInter);
+                        lengthMas.Add(Metric(point1,curInter));
+                    }
+                }
+                else if(_field[i].Item1 > _field[i+1].Item1)
+                        if(curInter.Item1 <= _field[i].Item1 && curInter.Item1 >= _field[i+1].Item1)
+                        if((_field[i].Item2 < _field[i+1].Item2 && curInter.Item2 >= _field[i].Item2 && curInter.Item2 <= _field[i+1].Item2)
+                                         || (_field[i].Item2 > _field[i+1].Item2 && curInter.Item2 >= _field[i+1].Item2 && curInter.Item2 <= _field[i].Item2))
+                    {
+                        interPointsMas.Add(curInter);
+                        lengthMas.Add(Metric(point1,curInter));
+                    }
+
+            }
+            interPointsMas.Add(point2);
+            lengthMas.Add(Metric(point1,point2));
+            for(int i=1;i<lengthMas.Count-1;i++)
+            {
+                for(int j=1;j<lengthMas.Count-1;j++)
+                if(lengthMas[j] < lengthMas[j+1])
+                    {
+                        var temp = interPointsMas[j];
+                        interPointsMas[j] = interPointsMas[j+1];
+                        interPointsMas[j+1] = temp;
+
+                        var temp2 = lengthMas[j];
+                        lengthMas[j] = lengthMas[j+1];
+                        lengthMas[j+1] = temp2;
+                    }
+            }
+            for(int i=0;i<interPointsMas.Count-2;i++)
+            {
+                bool curResult1 = IsPointInField(interPointsMas[i]);
+                (double,double) guideVector = (interPointsMas[i+1].Item1 - interPointsMas[i].Item1,
+                                                        interPointsMas[i+1].Item2 - interPointsMas[i].Item2);
+                double norm = Math.Sqrt(guideVector.Item1 * guideVector.Item1 + guideVector.Item2 * guideVector.Item2);
+                guideVector.Item1 /= norm;
+                guideVector.Item2 /= norm;
+                if(curResult1 == true 
+                        && IsPointInField((interPointsMas[i].Item1 + guideVector.Item1,interPointsMas[i].Item2 + guideVector.Item2)) == true)
+                {
+                    bool curResult2=IsPointInField(interPointsMas[i+1]);
+                    if(curResult2 == true 
+                        || IsPointInField((interPointsMas[i+1].Item1 - guideVector.Item1,interPointsMas[i+1].Item2 - guideVector.Item2)) == true)
+                        finalSetOfSegments.Add((interPointsMas[i],interPointsMas[i+1]));
+                    
+                }
+            }
+                return finalSetOfSegments;
+            
+        }
     }
 }
