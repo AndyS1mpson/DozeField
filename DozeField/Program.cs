@@ -20,13 +20,14 @@ namespace DozeField
             //Console.WriteLine(point.IsPointInField(temp)); 
             Segment segment = new Segment((4,5),(7,10));
             Line line = new Line((4,5),(7,10));
+            DozeField field = new DozeField(temp);
             stopWatch.Start();
-            var result = line.ClippingOfLine(segment.startOfSegment,segment.endOfSegment,temp);
+            var result = field.Clip(segment.start,segment.end);
             stopWatch.Stop();
             long ts = stopWatch.ElapsedMilliseconds;
             foreach(var el in result)
             {
-                Console.WriteLine("{0},{1}",el.startOfSegment,el.endOfSegment);
+                Console.WriteLine("{0},{1}",el.start,el.end);
             }
             Console.WriteLine(ts);
         }

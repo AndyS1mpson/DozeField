@@ -24,8 +24,8 @@ namespace DozeField
                 (double x,double y) curGuideVector;
                 
                 checkingSide = new Line(vertices[i],vertices[i+1]);
-                checkingLine = checkingSide.NormalLine(point);
-                curInter = Line.IntersectionOfLines(checkingSide,checkingLine);
+                checkingLine = checkingSide.NormalTo(point);
+                curInter = checkingSide.IntersectionWith(checkingLine);
                 curGuideVector = (curInter.x - point.x , curInter.y - point.y);
 
                 double curDistance = Measure.Distance(curInter,point);

@@ -5,15 +5,15 @@ namespace DozeField
 {
     public class Segment
     {
-        public (double x,double y) startOfSegment;
-        public (double x,double y) endOfSegment;
+        public (double x,double y) start;
+        public (double x,double y) end;
         public (double x,double y) guideVector;
-        public Segment((double x,double y) _srartOfSegment,(double x,double y) _endOfSegment)
+        public Segment((double x,double y) _srart,(double x,double y) _end)
             {
-                startOfSegment = _srartOfSegment;
-                endOfSegment = _endOfSegment;
-                guideVector = (endOfSegment.x - startOfSegment.x,
-                                                            endOfSegment.y - startOfSegment.y);
+                start = _srart;
+                end = _end;
+                guideVector = (end.x - start.x,
+                                                            end.y - start.y);
                 double norm = Math.Sqrt(guideVector.Item1 * guideVector.Item1 + guideVector.Item2 * guideVector.Item2);
                 guideVector.Item1 /= norm;
                 guideVector.Item2 /= norm;
@@ -27,12 +27,12 @@ namespace DozeField
                 0 <= (x-x1)(x2-x) <= (x2-x1)^2
                 0 <= (y-y1)(y2-y) <= (y2-y1)^2
             */
-            if(((point.x - startOfSegment.x) * (endOfSegment.x - point.x) <= (endOfSegment.x - startOfSegment.x) * (endOfSegment.x - startOfSegment.x) 
-                            && 0 <= (point.x - startOfSegment.x) * (endOfSegment.x - point.x))
-                && (point.y - startOfSegment.y) * (endOfSegment.y - point.y) <= (endOfSegment.y - startOfSegment.y) * (endOfSegment.y - startOfSegment.y) 
-                            && 0 <= (point.y - startOfSegment.y) * (endOfSegment.y - point.y))
+            if(((point.x - start.x) * (end.x - point.x) <= (end.x - start.x) * (end.x - start.x) 
+                            && 0 <= (point.x - start.x) * (end.x - point.x))
+                && (point.y - start.y) * (end.y - point.y) <= (end.y - start.y) * (end.y - start.y) 
+                            && 0 <= (point.y - start.y) * (end.y - point.y))
             {
-                if(endOfSegment.x >= startOfSegment.x)
+                if(end.x >= start.x)
                     result = 1;
                 else result =2;
             }
@@ -54,6 +54,22 @@ namespace DozeField
             // }
             //return result;
         }
+
+        //checking segment is in field or not
+        public bool IsIn((double x,double t)[] vertices)
+        {
+            bool result = false;
+            bool check = PointExtension.IsPointInField(start,vertices);
+            if(check == true && PointExtension.IsPointInField((start.x + guideVector.x
+                                                                    ,start.y + guideVector.y),vertices))
+            {
+                bool check2 = PointExtension.IsPointInField(end,vertices);
+                if(check2 == true && PointExtension.IsPointInField((end.x - guideVector.x
+                                                                    ,end.y - guideVector.y),vertices))
+                result = true;
+            }
+            return result;
+        }
     }
     public struct Line 
     {
@@ -74,7 +90,7 @@ namespace DozeField
             c *= normCoef;
         }
         //find the coefficients of the equation of the perpendicular line passing current point
-        public Line NormalLine((double x,double y) point)
+        public Line NormalTo ((double x,double y) point)
         {
             Line normalLine;
             normalLine.a = b;
@@ -84,80 +100,20 @@ namespace DozeField
         }
         
         //find intersection of 2 lines
-        public static (double x,double y) IntersectionOfLines(Line line1,Line line2)
+        public (double x,double y) IntersectionWith(Line line)
         {
             (double x,double y) intersection;
-            if(line1.a !=0)
+            if(a !=0)
             {
-                intersection.y = (line2.a * line1.c - line2.c * line1.a) / (line1.a * line2.b - line2.a * line1.b);
-                intersection.x = (-line1.b * intersection.y - line1.c) / line1.a;
+                intersection.y = (line.a * c - line.c * a) / (a * line.b - line.a * b);
+                intersection.x = (-b * intersection.y - c) / a;
             }
             else
             {
-                intersection.y = -line1.c / line1.b;
-                intersection.x = (line2.b * line1.c - line2.c * line1.b) / (line2.a * line1.b);
+                intersection.y = -c / b;
+                intersection.x = (line.b * c - line.c * b) / (line.a * b);
             }
             return intersection;
-        }
-
-        //checking segment is in field or not
-        public bool IsSegmentInField(Segment segment,(double x,double t)[] vertices)
-        {
-            bool result = false;
-            bool check = PointExtension.IsPointInField(segment.startOfSegment,vertices);
-            if(check == true && PointExtension.IsPointInField((segment.startOfSegment.x + segment.guideVector.x
-                                                                    ,segment.startOfSegment.y + segment.guideVector.y),vertices))
-            {
-                bool check2 = PointExtension.IsPointInField(segment.endOfSegment,vertices);
-                if(check2 == true && PointExtension.IsPointInField((segment.endOfSegment.x - segment.guideVector.x
-                                                                    ,segment.endOfSegment.y - segment.guideVector.y),vertices))
-                result = true;
-            }
-            return result;
-        }
-
-        public List<Segment>  ClippingOfLine((double x,double y) startOfSegment,(double x,double y) endOfSegment,(double x,double t)[] vertices)
-        {
-            
-            List<Segment> finalSetOfSegments = new List<Segment>();
-            Line line = new Line(startOfSegment,endOfSegment);
-            List<((double x,double y) point,double length)> interPointsMas = new List<((double x,double y), double length)>();
-            interPointsMas.Add((startOfSegment,0));
-
-            //find all intersections of the line with the sides of the field
-            for(int i = 0; i < vertices.Length - 1; i++)
-            {
-                Line side = new Line(vertices[i],vertices[i+1]);
-                (double x,double y) curInter = IntersectionOfLines(side,line);
-                Segment sideSegment = new Segment(vertices[i],vertices[i+1]);
-                int check = sideSegment.IsPointOnSegment(curInter);
-                if(check == 1 || check ==2)
-                    {
-                        interPointsMas.Add((curInter,Measure.Distance(startOfSegment,curInter)));
-                        
-                        //sort the list by the distance to the beginning of the segment
-                        for(int j = 1; j < interPointsMas.Count - 1; j++)
-                        {
-                            if(interPointsMas[j].length > interPointsMas[j+1].length)
-                            {
-                                var temp = interPointsMas[j];
-                                interPointsMas[j] = interPointsMas[j+1];
-                                interPointsMas[j + 1] = temp;
-                            }
-                        }
-                    }
-            }
-            interPointsMas.Add((endOfSegment,Measure.Distance(startOfSegment,endOfSegment)));
-
-            for(int i = 0; i < interPointsMas.Count - 1; i++)
-            {
-                Segment segment = new Segment(interPointsMas[i].point,interPointsMas[i+1].point);
-                if(IsSegmentInField(segment,vertices))
-                    finalSetOfSegments.Add(segment);
-            }
-            return finalSetOfSegments;
-        }
-
-    
+        }   
     }
 }
