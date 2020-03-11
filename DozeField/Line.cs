@@ -52,7 +52,7 @@ namespace DozeField
             //             || (startOfSegment.y >= endOfSegment.y && point.y <= startOfSegment.y && point.y >= endOfSegment.y))
             //         result = 2;
             // }
-            return result;
+            //return result;
         }
     }
     public struct Line 
