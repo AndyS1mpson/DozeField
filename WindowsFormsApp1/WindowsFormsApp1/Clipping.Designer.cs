@@ -207,6 +207,7 @@
             this.Controls.Add(this.picture);
             this.Name = "Clipping";
             this.Text = "Clipping";
+            this.Load += new System.EventHandler(this.Clipping_Load);
             ((System.ComponentModel.ISupportInitialize)(this.picture)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

@@ -13,7 +13,6 @@ namespace WindowsFormsApp1
     public partial class Clipping : Form
     {
         Bitmap bmp;
-        Graphics g;
         private List<(double x,double y)> _vertices;
         private Segment segment;
         public DozeField dozeField;
@@ -22,7 +21,6 @@ namespace WindowsFormsApp1
             _vertices = new List<(double, double)>();
             InitializeComponent();
             bmp = new Bitmap(picture.Width, picture.Height);
-            g = Graphics.FromImage(bmp);
         }
         private void DrawPolygon()
         {
@@ -40,7 +38,6 @@ namespace WindowsFormsApp1
 
         public void DrawLine(Segment segment)
         {
-            Bitmap bmp = new Bitmap(picture.Width, picture.Height);
             Graphics g = Graphics.FromImage(bmp);
             g.DrawLine(new Pen(Color.Red), new PointF((float)segment.start.x,(float)segment.start.y), new PointF((float)segment.end.x, (float)segment.end.y));
             picture.Image = bmp;
@@ -54,6 +51,8 @@ namespace WindowsFormsApp1
             double xEnd = Double.Parse(endX.Text);
             double yEnd = Double.Parse(endY.Text);
             segment = new Segment((xStart, yStart), (xEnd, yEnd));
+            bmp = new Bitmap(picture.Width, picture.Height);
+            picture.Refresh();
             DrawLine(segment);
 
             startX.Clear();
@@ -61,12 +60,6 @@ namespace WindowsFormsApp1
             endX.Clear();
             endY.Clear();
 
-            //string[] row = { startX.Text, startY.Text, endX.Text, endY.Text };
-            //var listViewItem = new ListViewItem(row);
-            //listViewItem.SubItems.Add(startX.Text);
-            //listViewItem.SubItems.Add(startY.Text);
-            //listViewItem.SubItems.Add(endX.Text);
-            //listViewItem.SubItems.Add(endY.Text);
         }
 
 
@@ -91,7 +84,9 @@ namespace WindowsFormsApp1
             _vertices.Add(_vertices[0]);
             dozeField = new DozeField(_vertices.ConvertFromListTo());
             var result = dozeField.Clip(segment.start, segment.end);
-            foreach(var el in result)
+            bmp = new Bitmap(picture.Width, picture.Height);
+            picture.Refresh();
+            foreach (var el in result)
             {
                 DrawLine(el);
             }
@@ -112,5 +107,9 @@ namespace WindowsFormsApp1
 
         }
 
+        private void Clipping_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }
