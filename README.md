@@ -14,4 +14,4 @@
 *Интерфейс*
 
 Пользователю предоставляется простой интерфейс для проверки алгоритмов
-![alt text](DozeField/ShowInterface/StartWindow.jpg)
+![](ShowInterface/StartWindow.jpg)
